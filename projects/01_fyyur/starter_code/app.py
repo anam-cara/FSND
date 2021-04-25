@@ -240,7 +240,7 @@ def create_venue_form():
   form = VenueForm()
   return render_template('forms/new_venue.html', form=form)
 
-"""@app.route('/venues/create', methods=['POST'])
+@app.route('/venues/create', methods=['POST'])
 def create_venue_submission():
   # TODO: insert form data as a new Venue record in the db, instead
   # TODO: modify data to be the data object returned from db insertion
@@ -275,7 +275,7 @@ def create_venue_submission():
   else:
       # on successful db insert, flash success
       flash('Venue ' + request.form['name'] + ' was successfully listed!')
-  return render_template('pages/home.html')"""
+  return render_template('pages/home.html')
 
 @app.route('/venues/<venue_id>', methods=['DELETE'])
 def delete_venue(venue_id):
