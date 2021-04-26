@@ -5,7 +5,7 @@
 import json
 import dateutil.parser
 import babel
-from flask import Flask, render_template, request, Response, flash, redirect, url_for
+from flask import Flask, render_template, request, Response, flash, redirect, url_for, abort
 from flask_moment import Moment
 from flask_sqlalchemy import SQLAlchemy
 import logging
@@ -35,7 +35,7 @@ class Venue(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String)
-    genres = db.Column(db.ARRAY(db.String()))
+    genres = db.Column(db.ARRAY(db.String), nullable=False)
     address = db.Column(db.String(120))
     city = db.Column(db.String(120))
     state = db.Column(db.String(120))
@@ -48,6 +48,7 @@ class Venue(db.Model):
 
     shows = db.relationship('Show', backref='Venue', lazy=True)
 
+
     # TODO: implement any missing fields, as a database migration using Flask-Migrate
 
 class Artist(db.Model):
@@ -55,7 +56,7 @@ class Artist(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String)
-    genres = db.Column(db.ARRAY(db.String()))
+    genres = db.Column(db.ARRAY(db.String), nullable=False)
     city = db.Column(db.String(120))
     state = db.Column(db.String(120))
     phone = db.Column(db.String(120))
@@ -69,6 +70,7 @@ class Artist(db.Model):
 
     # TODO: implement any missing fields, as a database migration using Flask-Migrate
 
+
 class Show(db.Model):
   __tablename__ = 'Show'
 
@@ -76,7 +78,7 @@ class Show(db.Model):
   venue_id = db.Column(db.Integer, db.ForeignKey(Venue.id), nullable=False)
   artist_id = db.Column(db.Integer, db.ForeignKey(Artist.id), nullable=False)
   start_time = db.Column(db.String(120), nullable=False)
-  
+
 # TODO Implement Show and Artist models, and complete all model relationships and properties, as a database migration.
 
 
@@ -244,22 +246,23 @@ def create_venue_form():
 def create_venue_submission():
   # TODO: insert form data as a new Venue record in the db, instead
   # TODO: modify data to be the data object returned from db insertion
+  form = VenueForm(request.form)
   error = False
   try:
     newvenue = Venue(
-      name = request.form['name']
-      genres = request.form.getlist('genres')
-      address = request.form['address']
-      city = request.form['city']
-      state = request.form['state']
-      phone = request.form['phone']      
-      facebook_link = request.form['facebook_link']
-      seeking_talent = request.form['seeking_talent']
-      seeking_description = request.form['seeking_description']
-      image_link = request.form['image_link']
+      name = form.name.data
+      genres = form.genres.data
+      address = form.address.data
+      city = form.city.data
+      state = form.state.data
+      phone = form.phone.data      
+      facebook_link = form.facebook_link.data
+      seeking_talent = form.seeking_talent.data
+      seeking_description = form.seeking_description.data
+      image_link = form.image_link.data
     )
     db.session.add(newvenue)
-    db.session.commit())
+    db.session.commit()
   except():
       db.session.rollback()
       error = True
