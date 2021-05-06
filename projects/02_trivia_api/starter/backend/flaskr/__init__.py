@@ -67,6 +67,24 @@ def create_app(test_config=None):
   Clicking on the page numbers should update the questions. 
   '''
 
+  @app.route('/questions')
+  def retrieve_questions():
+    selection = Question.query.order_by(Question.id).all()
+    current_questions = paginate_questions(request, selection)
+
+    categories = Category.query.order_by(Category.type).all()
+
+    if len(current_questions) == 0:
+      abort(404)
+
+    return jsonify({
+      'success': True,
+      'questions': current_questions,
+      'total_questions': len(selection),
+      'categories': {category.id: category.type for category in categories},
+      'current_category': None
+    })
+
   '''
   @TODO: 
   Create an endpoint to DELETE question using a question ID. 
@@ -74,6 +92,28 @@ def create_app(test_config=None):
   TEST: When you click the trash icon next to a question, the question will be removed.
   This removal will persist in the database and when you refresh the page. 
   '''
+  @app.route('/questions/<int:question_id>', methods=['DELETE'])
+  def delete_question(question_id):
+    try:
+      question = Question.query.filter(Question.id == question_id).one_or_none()
+
+      if question is None:
+        abort(404)
+
+      question.delete()
+      #selection = Question.query.order_by(question.id).all()
+      #current_questions = paginate_questions(request, selection)
+
+      return jsonify({
+        'success': True,
+        'deleted': question_id,
+        #'questions': current_questions,
+        #'total_questions': len(question.query.all())
+      })
+
+    except:
+      abort(422)
+
 
   '''
   @TODO: 
@@ -85,7 +125,45 @@ def create_app(test_config=None):
   the form will clear and the question will appear at the end of the last page
   of the questions list in the "List" tab.  
   '''
+  @app.route("/questions", methods=['POST'])
+  def post_question():
+    body = request.get_json()
 
+    new_question = body.get('question', None)
+    new_answer = body.get('answer', None)
+    new_difficulty = body.get('difficulty', None)
+    new_category = body.get('category', None)
+    search = body.get('search', None)
+
+    try:
+      if search:
+        selection = Question.query.order_by(Question.id).filter(Question.question.ilike('%{}%'.format(search)))
+        current_questions = paginate_questions(request, selection)
+
+        return jsonify({
+          'success': True,
+          'questions': current_questions,
+          'total_questions': len(Question.query.all()),
+          'current_category': None
+        })
+
+      else:
+        # abort if any of the form fields were left empty
+        if None in (new_question, new_answer, new_difficulty, new_category):
+          abort(422)
+
+        else:  
+          question = Question(question=new_question, answer=new_answer, difficulty=new_difficulty, category=new_category)
+          question.insert()
+
+          return jsonify({
+            'success': True,
+            'created': question.id,
+          })
+
+    except:
+        abort(422)
+      
   '''
   @TODO: 
   Create a POST endpoint to get questions based on a search term. 
@@ -96,6 +174,8 @@ def create_app(test_config=None):
   only question that include that string within their question. 
   Try using the word "title" to start. 
   '''
+
+  #combined post and search question endpoint
 
   '''
   @TODO: 
