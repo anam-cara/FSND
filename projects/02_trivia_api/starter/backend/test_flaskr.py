@@ -95,15 +95,15 @@ class TriviaTestCase(unittest.TestCase):
         self.assertEqual(data['success'], False)
         self.assertEqual(data['message'], 'unprocessable')
 
-    def test_post_question(self):
+    def test_add_question(self):
         new_question = {
-            'question': 'test post question',
-            'answer': 'test post answer',
+            'question': 'test_add_question',
+            'answer': 'test_add_answer',
             'difficulty': 1,
             'category': 1
         }
         
-        res = self.client().post('/questions', json=new_question)
+        res = self.client().post('/questions/add', json=new_question)
         data = json.loads(res.data)
         
         self.assertEqual(res.status_code, 200)
@@ -115,7 +115,7 @@ class TriviaTestCase(unittest.TestCase):
             'answer': 'test post incomplete answer',
             'category': 1
         }
-        res = self.client().post('/questions', json=new_question)
+        res = self.client().post('/questions/add', json=new_question)
         data = json.loads(res.data)
 
         self.assertEqual(res.status_code, 422)
@@ -123,7 +123,7 @@ class TriviaTestCase(unittest.TestCase):
         self.assertEqual(data["message"], "unprocessable")
         
     def test_search_question_with_results(self):
-        res = self.client().post('/questions', json={'searchTerm': 'Bird'})
+        res = self.client().post('/questions/search', json={'searchTerm': 'Bird'})
         data = json.loads(res.data)
 
         self.assertEqual(res.status_code, 200)
@@ -131,7 +131,7 @@ class TriviaTestCase(unittest.TestCase):
         self.assertTrue(data['total_questions'])
 
     def test_search_question_without_results(self):
-        res = self.client().post('/questions', json={'searchTerm': 'abcdefghijk'})
+        res = self.client().post('/questions/search', json={'searchTerm': 'abcdefghijk'})
         data = json.loads(res.data)
 
         self.assertEqual(res.status_code, 200)

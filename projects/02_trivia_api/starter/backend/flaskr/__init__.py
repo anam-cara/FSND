@@ -125,41 +125,27 @@ def create_app(test_config=None):
   the form will clear and the question will appear at the end of the last page
   of the questions list in the "List" tab.  
   '''
-  @app.route("/questions", methods=['POST'])
-  def post_question():
+  @app.route("/questions/add", methods=['POST'])
+  def add_question():
     body = request.get_json()
-
     new_question = body.get('question', None)
     new_answer = body.get('answer', None)
     new_difficulty = body.get('difficulty', None)
     new_category = body.get('category', None)
-    search = body.get('search', None)
-
+    
     try:
-      if search:
-        selection = Question.query.order_by(Question.id).filter(Question.question.ilike('%{}%'.format(search)))
-        current_questions = paginate_questions(request, selection)
+      # abort if any of the form fields were left empty
+      if None in (new_question, new_answer, new_difficulty, new_category):
+        abort(422)
+
+      else:  
+        question = Question(question=new_question, answer=new_answer, difficulty=new_difficulty, category=new_category)
+        question.insert()
 
         return jsonify({
           'success': True,
-          'questions': current_questions,
-          'total_questions': len(Question.query.all()),
-          'current_category': None
+          'created': question.id,
         })
-
-      else:
-        # abort if any of the form fields were left empty
-        if None in (new_question, new_answer, new_difficulty, new_category):
-          abort(422)
-
-        else:  
-          question = Question(question=new_question, answer=new_answer, difficulty=new_difficulty, category=new_category)
-          question.insert()
-
-          return jsonify({
-            'success': True,
-            'created': question.id,
-          })
 
     except:
         abort(422)
@@ -175,7 +161,24 @@ def create_app(test_config=None):
   Try using the word "title" to start. 
   '''
 
-  #combined post and search question endpoint
+  @app.route("/questions/search", methods=['POST'])
+  def search_question():
+    body = request.get_json()
+    search = body.get('searchTerm', None)
+
+    try:
+      selection = Question.query.order_by(Question.id).filter(Question.question.ilike('%{}%'.format(search)))
+      current_questions = paginate_questions(request, selection)
+
+      return jsonify({
+        'success': True,
+        'questions': current_questions,
+        'total_questions': len(selection),
+        'current_category': None
+      })
+
+    except:
+        abort(422)
 
   '''
   @TODO: 
