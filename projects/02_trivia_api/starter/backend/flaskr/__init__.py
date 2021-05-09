@@ -101,14 +101,10 @@ def create_app(test_config=None):
         abort(404)
 
       question.delete()
-      #selection = Question.query.order_by(question.id).all()
-      #current_questions = paginate_questions(request, selection)
 
       return jsonify({
         'success': True,
         'deleted': question_id,
-        #'questions': current_questions,
-        #'total_questions': len(question.query.all())
       })
 
     except:
@@ -167,7 +163,7 @@ def create_app(test_config=None):
     search = body.get('searchTerm', None)
 
     try:
-      selection = Question.query.order_by(Question.id).filter(Question.question.ilike('%{}%'.format(search)))
+      selection = Question.query.order_by(Question.id).filter(Question.question.ilike('%{}%'.format(search))).all()
       current_questions = paginate_questions(request, selection)
 
       return jsonify({
@@ -189,6 +185,20 @@ def create_app(test_config=None):
   category to be shown. 
   '''
 
+  @app.route('/categories/<int:category_id>/questions', methods=['GET'])
+  def retrieve_questions_by_category(category_id):
+    selection = Question.query.filter(Question.category == str(category_id)).all()
+    current_questions = paginate_questions(request, selection)
+
+    if len(current_questions) == 0:
+      abort(404)
+
+    return jsonify({
+        'success': True,
+        'questions': current_questions,
+        'total_questions': len(selection),
+        'current_category': category_id
+    })
 
   '''
   @TODO: 
@@ -201,6 +211,33 @@ def create_app(test_config=None):
   one question at a time is displayed, the user is allowed to answer
   and shown whether they were correct or not. 
   '''
+
+  @app.route('/quizzes', methods=['POST'])
+  def play_quiz():
+    body = request.get_json()
+    previous_questions = body.get('previous_questions')
+    selected_category = body.get('quiz_category')
+
+    try:
+      # abort if any of the form fields were left empty
+      if None in (previous_questions, selected_category):
+        abort(422)
+
+      # load all unused questions (not in previous_questions) if "ALL" is selected
+      if (selected_category['id'] == 0):
+        unused_questions = Question.query.filter(Question.id.notin_((previous_questions))).all()
+      # load unused questions (not in previous_questions) for selected category
+      else:
+        unused_questions = Question.query.filter_by(category=selected_category['id']).filter(Question.id.notin_((previous_questions))).all()
+    
+      new_question = unused_questions[random.randrange(0, len(unused_questions))].format() if len(unused_questions) > 0 else None 
+      
+      return jsonify({
+          'success': True,
+          'question': new_question
+      })
+    except:
+        abort(422)
 
   '''
   @TODO: 
